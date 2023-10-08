@@ -1,5 +1,9 @@
 # sre-lab01
 
+namespace: sre-cource-student-81
+compute cloud: Проект для студента vergorun
+
+
 ##Пререквезиты: 
  - на хост-деплоер установлены ansible, kubectl, helm
  - развернуты ВМ в МТС Compute Cloud (1core, 1GBram). Для ВМ, которая будет выполнять роль LoadBalancer, выделен публичный IP-адрес для доступа из кластера Kubernetes к DB (ввиду ограничений среды и невозможности организовать связность вне паблик-сети).

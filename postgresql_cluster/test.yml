@@ -1,0 +1,15 @@
+---
+- name: test
+  hosts: test
+  tasks:
+    - name: "Load PostgreSQL script into a variable"
+      set_fact:
+        migration_sql: "{{ lookup('file', 'weather_init.sql') }}"
+      ignore_errors: true
+
+    - name: Execute PostgreSQL script from variable
+      command: "psql -h x.x.x.x --port 5000 --user weather-user -d \"dbname=weather\" -c '{{ migration_sql }}'"
+      environment:
+        PGPASSWORD: "xxx"
+      ignore_errors: true
+...

@@ -1,0 +1,94 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.srecourseapi.name }}
+  namespace: {{ default .Release.Namespace .Values.namespace | quote }}
+spec:
+  replicas: {{ .Values.srecourseapi.replicas }}
+  selector:
+    {{- with .Values.srecourseapi.labels }}
+    matchLabels:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  template:
+    metadata:
+      {{- with .Values.srecourseapi.labels }}
+      labels:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      containers:
+        - name: {{ .Values.srecourseapi.name }}
+          image: {{ .Values.srecourseapi.image.repository }}:{{ .Values.srecourseapi.image.tag }}
+          imagePullPolicy: {{ .Values.srecourseapi.image.pullPolicy }}
+          env:
+            - name: ASPNETCORE_URLS
+              value: {{ .Values.srecourseapi.env.aspnetcore_urls }}
+            - name: DOTNET_ENVIRONMENT
+              value: {{ .Values.srecourseapi.env.dotnet_env }}
+            - name: CONNECTIONSTRINGS__PGCONNECTION
+              value: {{ .Values.srecourseapi.env.pg_connection_string }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.srecourseapi.ports.internal }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz/live
+              port: http
+            initialDelaySeconds: 10
+            timeoutSeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz/ready
+              port: http
+            initialDelaySeconds: 5
+            timeoutSeconds: 15
+            periodSeconds: 30
+          resources: {{ .Values.srecourseapi.resources | toYaml | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.srecourseapi.name }}
+  namespace: {{ default .Release.Namespace .Values.namespace | quote }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.srecourseapi.ports.external }}
+      targetPort: {{ .Values.srecourseapi.ports.internal }}
+  {{- with .Values.srecourseapi.labels }}
+  selector:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.srecourseapi.name }}-ingress
+  namespace: {{ default .Release.Namespace .Values.namespace | quote }}
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    {{- if .Values.srecourseapi.ingress.prefix }}
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    {{- end }}
+spec:
+  rules:
+    - http:
+        paths:
+        {{- if .Values.srecourseapi.ingress.prefix }}
+        - path: {{ .Values.srecourseapi.ingress.prefix }}(/|$)(.*)
+        {{- else }}
+        - path: "/"
+        {{- end }}
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Values.srecourseapi.name }}
+              port:
+                number: {{ .Values.srecourseapi.ports.external }}
+      {{- if .Values.srecourseapi.ingress.host }}
+      host: {{ .Values.srecourseapi.ingress.host }}
+      {{- end }}
