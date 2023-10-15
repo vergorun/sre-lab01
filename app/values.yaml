@@ -9,9 +9,9 @@ srecourseapi:
   labels:
     app: srecourseapi
   env:
-    aspnetcore_urls: "http://*:8080"
-    dotnet_env: Development # Development|Production
-    pg_connection_string: "Server=91.185.85.11;Port=5000;Userid=weather-user;Password=weather-user-pass;Timeout=15;SslMode=Prefer;Database=weather"
+    ASPNETCORE_URLS: "http://*:8080"
+    DOTNET_ENVIRONMENT: Development # Development|Production
+    CONNECTIONSTRINGS__PGCONNECTION: "Server=91.185.85.11;Port=5000;Userid=weather-user;Password=weather-user-pass;Timeout=15;SslMode=Prefer;Database=weather"
   replicas: 3
   ports:
     internal: 8080

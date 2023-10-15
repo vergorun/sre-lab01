@@ -22,13 +22,9 @@ spec:
         - name: {{ .Values.srecourseapi.name }}
           image: {{ .Values.srecourseapi.image.repository }}:{{ .Values.srecourseapi.image.tag }}
           imagePullPolicy: {{ .Values.srecourseapi.image.pullPolicy }}
-          env:
-            - name: ASPNETCORE_URLS
-              value: {{ .Values.srecourseapi.env.aspnetcore_urls }}
-            - name: DOTNET_ENVIRONMENT
-              value: {{ .Values.srecourseapi.env.dotnet_env }}
-            - name: CONNECTIONSTRINGS__PGCONNECTION
-              value: {{ .Values.srecourseapi.env.pg_connection_string }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.srecourseapi.name }}
           ports:
             - name: http
               containerPort: {{ .Values.srecourseapi.ports.internal }}
@@ -92,3 +88,12 @@ spec:
       {{- if .Values.srecourseapi.ingress.host }}
       host: {{ .Values.srecourseapi.ingress.host }}
       {{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.srecourseapi.name }}
+data:
+  {{- range $key, $value := .Values.srecourseapi.env }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
