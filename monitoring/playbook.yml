@@ -1,0 +1,40 @@
+- name: install prometheus
+  hosts: balancers
+  become: yes
+  roles:
+    - prometheus-simple
+- name: install alertmanager
+  vars_files:
+    - vars/alertmanager.yml
+  hosts: balancers
+  become: yes
+  roles:
+    - prometheus.prometheus.alertmanager
+- name: install alertmanager telegram bot token
+  hosts: balancers
+  become: yes
+  tasks:
+  - copy:
+      src: vars/alertmanager_bot_token
+      dest: /etc/alertmanager/alertmanager_bot_token
+      owner: alertmanager
+      group: alertmanager
+      mode: '0600'
+- name: install blackbox_exporter
+  vars_files:
+    - vars/blackbox-exporter.yml
+  hosts: balancers
+  become: yes
+  roles:
+    - prometheus.prometheus.blackbox_exporter
+- name: install node-exporter
+  hosts: monitoring_nodes
+  become: yes
+  roles:
+    - node-exporter
+- name: install postgresql-exporter
+  hosts: postgres_cluster
+  roles:
+  - role: prometheus-postgres
+    prometheus_postgres_dbname: weather
+

@@ -73,3 +73,66 @@ ansible-playbook remove_cluster.yml
 - Ansible-роль на основе https://github.com/vitabaks/postgresql_cluster/, убрана часть неиспользуемых опций вместе с ролями (*backup, pgbouncer, consul и т.д.)
 - Ограничение на debian-подобные ОС (на redhat-подобных не тестировал, поэтому убрал)
 - Добавлена опция init_sql в *postgresql_cluster/vars/main.yml* и таски по инициализации базы с тестовой записью из файла при деплое.
+
+## Мониторинг 
+
+Для разворачивания всего стека мониторинга (prometheus, alertmanger, экспортеров и их конфигураций) будем использовать ansible, inverntory воспользуемся тем же что для разворачивания приложений.
+Итого требуется развернуть:
+1. node-exporter на все ВМ
+2. prometherus на ВМ с loadBlancer
+3. alertmanger на ВМ с loadBlancer
+4. patroni-exporter используем встроенный в patroni на ВМ с DB
+5. postgres-exporter на ВМ с DB
+6. etcd-exporter на ВМ с etcd (+ loadBalancer)
+7. blackbox-exporter на ВМ loadBalancer
+
+
+Перед запуском palybook необходимо:
+- установить набор community ролей для prometheus (для развертывания alermanager, blackbox-exporter)
+```
+ansible-galaxy collection install prometheus.prometheus
+```
+
+проверить, что коллекция установлена
+```
+ansible-galaxy collection list
+```
+
+
+- Проверить значения по-умолчанию в:
+
+```
+monitoring/roles/node-exporter/defaults/main.yml
+monitoring/roles/prometheus-postgres/defaults/main.yml
+monitoring/roles/prometheus-simple/defaults/main.yml
+```
+- Проверить шаблоны конфигураций prometheus:
+```
+monitoring/roles/prometheus-simple/templates/*.j2
+monitoring/roles/prometheus-simple/files/alerts.yml
+```
+- Проверить параметры конфигурации alermanager (вписать актуальный chat-id для API Telegram):
+```
+monitoring/vars/alertmanager.yml
+```
+- вписать токен от API Telegram bot в:
+```
+monitoring/vars/alertmanager_bot_token 
+```
+
+- Проверить шаблоны конфигураций blackbox-exporter (ip и host) в:
+```
+monitoring/vars/blackbox-exporter.yml
+```
+
+Если все корректно, то запустить playbook
+```
+cd monitoring
+ansible-playbook -i ../postgresql_cluster/inventory playbook.yml
+```
+
+После развертывания проверить, что все экспортеры поднялись и встали на опрос в prometheus
+
+```
+http://<ip_lb>:9090/classic/targets
+```

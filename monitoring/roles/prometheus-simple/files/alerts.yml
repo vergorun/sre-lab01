@@ -1,0 +1,83 @@
+groups:
+- name: Sample Alerts
+  rules:
+  - alert: Watchdog
+    expr: vector(1)
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      description: This is an alert meant to ensure that the entire alerting pipeline is functional. This alert is always firing, therefore it should always be firing in Alertmanager and always fire against a receiver. There are integrations with various notification mechanisms that send a notification when this alert is not firing. For example the "DeadMansSnitch" integration in PagerDuty.
+      summary: Ensure entire alerting pipeline is functional
+  - alert: HostMemoryIsUnderutilized
+    expr: (100 - (rate(node_memory_MemAvailable_bytes[30m]) / node_memory_MemTotal_bytes * 100) < 20) * on(instance) group_left (nodename) node_uname_info{nodename=~".+"}
+    for: 1w
+    labels:
+      severity: info
+    annotations:
+      summary: Host Memory is underutilized (instance {{ $labels.instance }})
+      description: "Node memory is < 20% for 1 week. Consider reducing memory space. (instance {{ $labels.instance }})\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+  - alert: PrometheusTargetMissing
+    expr: up == 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Prometheus target missing (instance {{ $labels.instance }})
+      description: "A Prometheus target has disappeared. An exporter might be crashed.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+  - alert: PrometheusNotConnectedToAlertmanager
+    expr: prometheus_notifications_alertmanagers_discovered < 1
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Prometheus not connected to alertmanager (instance {{ $labels.instance }})
+      description: "Prometheus cannot connect the alertmanager\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+  - alert: PostgresqlDown
+    expr: pg_up == 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Postgresql down (instance {{ $labels.instance }})
+      description: "Postgresql instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+  - alert: PostgresqlRestarted
+    expr: time() - pg_postmaster_start_time_seconds < 60
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Postgresql restarted (instance {{ $labels.instance }})
+      description: "Postgresql restarted\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+  - alert: PatroniHasNoLeader
+    expr: (max by (scope) (patroni_master) < 1) and (max by (scope) (patroni_standby_leader) < 1)
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Patroni has no Leader (instance {{ $labels.instance }})
+      description: "A leader node (neither primary nor standby) cannot be found inside the cluster {{ $labels.scope }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+  - alert: EtcdInsufficientMembers
+    expr: count(etcd_server_id) % 2 == 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Etcd insufficient Members (instance {{ $labels.instance }})
+      description: "Etcd cluster should have an odd number of members\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+  - alert: EtcdNoLeader
+    expr: etcd_server_has_leader == 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Etcd no Leader (instance {{ $labels.instance }})
+      description: "Etcd cluster have no leader\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+  - alert: BlackboxProbeFailed
+    expr: probe_success == 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Blackbox probe failed (instance {{ $labels.instance }})
+      description: "Probe failed\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

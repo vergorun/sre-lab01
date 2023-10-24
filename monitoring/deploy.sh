@@ -1,0 +1,1 @@
+ansible-playbook -i ../postgresql_cluster/inventory playbook.yml

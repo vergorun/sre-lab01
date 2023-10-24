@@ -1,0 +1,19 @@
+---
+# defaults file for roles/prometheus.prometheus.alertmanager
+alertmanager_receivers:
+  - name: 'default'
+  - name: 'alert-telegram'
+    telegram_configs: 
+    - bot_token_file: '/etc/alertmanager/alertmanager_bot_token'
+      chat_id: 106356651
+alertmanager_route:
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  group_by: [cluster]
+  receiver: 'default'
+  routes:
+    - matchers:
+        - alertname=!Watchdog
+      receiver: alert-telegram
+      continue: true

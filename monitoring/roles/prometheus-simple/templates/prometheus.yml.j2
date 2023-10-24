@@ -1,0 +1,55 @@
+#jinja2: lstrip_blocks: "True"
+{{ prometheus_var_config | to_nice_yaml(indent=2) }}
+{% if prometheus_node_exporter %}
+- job_name: node
+  scrape_interval: 15s
+  metrics_path: /metrics
+  static_configs:
+  - targets:
+{% for server in groups[prometheus_node_exporter_group] %}
+    - '{{ server }}:9100'
+{% endfor %}
+- job_name: patroni
+  scrape_interval: 15s
+  metrics_path: /metrics
+  static_configs:
+  - targets:
+{% for server in groups[prometheus_patroni_group] %}
+    - '{{ server }}:8008'
+{% endfor %}
+- job_name: etcd
+  scrape_interval: 15s
+  metrics_path: /metrics
+  static_configs:
+  - targets:
+{% for server in groups[prometheus_etcd_group] %}
+    - '{{ server }}:2379'
+{% endfor %}
+- job_name: postgres
+  scrape_interval: 15s
+  metrics_path: /metrics
+  static_configs:
+  - targets:
+{% for server in groups[prometheus_postgres_group] %}
+    - '{{ server }}:9187'
+{% endfor %}
+{% for server in groups[prometheus_balancers_group] %}
+- job_name: 'blackbox-{{ server }}'
+  scrape_interval: 15s
+  metrics_path: /probe
+  params:
+    module: [http_2xx_weather]
+  static_configs:
+  - targets:
+      - 91.185.85.213/Cities/0
+      - 91.185.85.213/WeatherForecast
+      - {{ server }}:9090/-/healthy
+  relabel_configs:
+    - source_labels: [__address__]
+      target_label: __param_target
+    - source_labels: [__param_target]
+      target_label: instance
+    - target_label: __address__
+      replacement: '{{ server }}:9115'
+{% endfor %}
+{% endif %}

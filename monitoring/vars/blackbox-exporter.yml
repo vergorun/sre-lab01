@@ -1,0 +1,16 @@
+blackbox_exporter_configuration_modules:
+  http_2xx_weather:
+    prober: http
+    timeout: 15s
+    http:
+      ip_protocol_fallback: true
+      method: GET
+      headers:
+        Host: app.pub.sre.lab
+      follow_redirects: true
+      enable_http2: true
+    tcp:
+      ip_protocol_fallback: true
+    icmp:
+      ip_protocol_fallback: true
+      ttl: 64

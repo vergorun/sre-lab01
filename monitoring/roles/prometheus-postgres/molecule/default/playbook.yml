@@ -1,0 +1,20 @@
+---
+- name: Converge
+  hosts: all
+  roles:
+
+    - role: ome.postgresql
+      postgresql_databases:
+        - name: alice
+      postgresql_users:
+        - user: alice
+          password: alice123
+          databases: [alice]
+      postgresql_version: "11"
+
+    - role: ome.prometheus_postgres
+      prometheus_postgres_dbname: alice
+      prometheus_postgres_port: 19187
+      prometheus_postgres_query_filenames:
+        - queries-default.yml
+        - queries-pg_statio_user_tables.yml
